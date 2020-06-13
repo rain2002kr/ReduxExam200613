@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/4.0.5/redux.js"></script>
+    
     <title>Redux Sample project</title>
   
     
@@ -96,7 +97,8 @@
         return newState;
     };
 
-    var store = Redux.createStore(reducer);
+    var store = Redux.createStore(reducer,window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()); 
+
     store.subscribe(content); //와우 요렇게 등록만 시키면 체인지가 일어나면 변화시킨다. 
     store.subscribe(TOC);
     store.subscribe(control);
