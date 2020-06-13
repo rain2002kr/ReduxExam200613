@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/redux/4.0.5/redux.js"></script>
+    <title>Redux Sample project</title>
+  
+    
+</head>
+<body>
+
+    <div id="subject"></div>
+    <div id="toc"></div>
+    <div id ="control"> </div>
+    <div id ="content"> </div>
+    
+<script>
+     function reducer(state, action){
+        if(state === undefined){
+            return{
+                mode : 'create',
+                max_id:2,
+                seleted_id : null,
+                
+                contents:[
+                    {id:1, title:'HTML',dsc:'HTML is...'},
+                    {id:2, title:'CSS',dsc:'CSS is...'}
+                ]
+
+            }
+        }
+        var newState ='';
+        if(action.type === 'SELECT'){
+            newState = Object.assign({}, state, {seleted_id : action.id, mode:action.mode
+            
+            });
+        }
+        else if(action.type === 'CREATE'){
+            var newMaxId = state.max_id+1;
+            var _contents = state.contents.concat();
+            
+            _contents.push({id:newMaxId, title:action.title, dsc:action.dsc});
+            newState = Object.assign({}, state, {
+                max_id : newMaxId,
+                contents : _contents,
+                mode:'read'
+            });
+        }
+        else if(action.type === 'UPDATE'){
+            var _contents = state.contents.concat();
+
+            var i = 0;
+            while(i < state.contents.length){
+                if(state.contents[i].id === state.seleted_id){
+                    _contents[i].id  = state.seleted_id;
+                    _contents[i].title = action.title;
+                    _contents[i].dsc = action.dsc;
+
+                    break;
+                }
+                i++;
+            }
+            
+            newState = Object.assign({}, state, {
+                contents : _contents,
+                mode:'read'
+            });
+        }
+
+        else if(action.type === 'MDOE_CHANGE'){
+            newState = Object.assign({}, state, { mode:action.mode
+            
+            });
+        }
+        else if(action.type === 'DELETE'){
+            var newContents = [];
+            var i = 0 ;
+            while(i < state.contents.length){
+                if(state.seleted_id !== state.contents[i].id){
+                    newContents.push(state.contents[i]);
+                }
+                i++;
+            }    
+
+            newState = Object.assign({}, state, { 
+                contents:newContents,
+                mode:'welcome'
+            });
+        }
+
+
+        console.log('action : ', action);
+        console.log('state : ', state);
+        console.log('newState : ',  newState);
+        return newState;
+    };
+
+    var store = Redux.createStore(reducer);
+    store.subscribe(content); //와우 요렇게 등록만 시키면 체인지가 일어나면 변화시킨다. 
+    store.subscribe(TOC);
+    store.subscribe(control);
+    
+    function subject(){
+        document.querySelector('#subject').innerHTML =`
+        <header>
+            <h1>WEB</h1>
+            <p>Hello, WEB!</p>
+        </header>
+        `
+        }
+    function TOC(){
+        var state = store.getState();
+        var i = 0;
+        var liTags ='';
+        
+        while(i < state.contents.length){
+            liTags = liTags + `
+            <li>
+                <a 
+                onclick="
+                event.preventDefault();
+                var action ={type:'SELECT',id:${state.contents[i].id}, mode:'read'}
+                store.dispatch(action);
+                "
+                href="${state.contents[i].id}">${state.contents[i].title}</a>
+            </li>
+            `
+            i++;
+        }
+
+        document.querySelector('#toc').innerHTML = `
+    <nav>
+        <ul>
+            ${liTags}
+        </ul>
+    </nav>        
+        `
+    }
+    function control(){
+    var state = store.getState();
+
+        document.querySelector('#control').innerHTML = `
+        <article>
+            <ul>
+                <li><a onclick ="
+                    event.preventDefault();
+                    store.dispatch({
+                        type:'MDOE_CHANGE',
+                        mode:'create'
+                    })
+                    "
+                    href="/create">create</a></li>
+                <li><a onclick ="
+                    event.preventDefault();
+                    store.dispatch({
+                        type:'MDOE_CHANGE',
+                        mode:'update'
+                    })
+
+                    "
+                    href="/update">update</a></li>
+            </ul>
+            <input type="button" value="삭제" onclick ="
+                    event.preventDefault();
+                    store.dispatch({
+                        type:'DELETE',
+
+                    });
+
+
+                    "></input>
+            
+        </article>
+        `
+    
+    }
+    function content(){
+        var state = store.getState();
+        if(state.mode === "create"){
+            document.querySelector('#content').innerHTML =`
+        <article>
+        <form onsubmit="
+            event.preventDefault();
+            var _title = this.title.value;
+            var _dsc = this.dsc.value;
+            
+            store.dispatch({
+                type:'CREATE',
+                title:_title,
+                dsc:_dsc
+            });
+            ">
+
+            <p><input type="text" name="title" placeholder="title"></input></p>
+            <p><textarea name="dsc" placeholder="dscription"></textarea></p>
+            <p><input type="submit"></p>
+        </form>                
+        </article>
+        `
+        }else if(state.mode === "update"){
+            var aTitle, aDsc;
+            var i = 0;
+            while(i < state.contents.length){
+                if(state.contents[i].id === state.seleted_id){
+                    aTitle = state.contents[i].title;
+                    aDsc = state.contents[i].dsc;
+                    break;
+                }
+                i++;
+            }
+            document.querySelector('#content').innerHTML =`
+        <article>
+        <form onsubmit="
+            event.preventDefault();
+            var _title = this.title.value;
+            var _dsc = this.dsc.value;
+
+            store.dispatch({
+                type:'UPDATE',
+                title:_title,
+                dsc:_dsc
+            });
+            ">
+
+            <p><input type="text" name="title" value=${aTitle}></input></p>
+            <p><textarea name="dsc" >${aDsc}</textarea></p>
+            <p><input type="submit"></p>
+        </form>                
+        </article>
+        `
+        }else if(state.mode === "read"){
+            var aTitle, aDsc;
+            var i = 0;
+            while(i < state.contents.length){
+                if(state.contents[i].id === state.seleted_id){
+                    aTitle = state.contents[i].title;
+                    aDsc = state.contents[i].dsc;
+                    break;
+                }
+                i++;
+            }
+            //add 뉴 펑션 
+            if(null === state.seleted_id){
+                aTitle ="Welcome";
+                aDsc ="Redux World!";
+            }
+            document.querySelector('#content').innerHTML = `
+            <h2>${aTitle}</h2>
+            <p>${aDsc}</p>
+            `
+        }
+        else if(state.mode === "welcome"){
+                aTitle ="Welcome";
+                aDsc ="Redux World!";
+            
+            document.querySelector('#content').innerHTML = `
+            <h2>${aTitle}</h2>
+            <p>${aDsc}</p>
+            `
+        }
+    }
+
+    subject();
+    TOC();
+    control();
+    content();
+</script>
+
+
+</body>
+</html>
